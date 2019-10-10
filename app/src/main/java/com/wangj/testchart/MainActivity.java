@@ -5,6 +5,7 @@ import android.graphics.Color;
 import android.net.Uri;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 
@@ -40,8 +41,8 @@ public class MainActivity extends AppCompatActivity {
 
     private CombinedChart chart;
     private final int count = 12;
-    private final String[] months = new String[] {
-            "Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Okt", "Nov", "Dec"
+    private final String[] months = new String[]{
+            "201901", "201903", "201905", "201907", "201909", "2019011"
     };
 
     @Override
@@ -54,50 +55,58 @@ public class MainActivity extends AppCompatActivity {
         chart.setDrawGridBackground(false);
         chart.setDrawBarShadow(false);
         chart.setHighlightFullBarEnabled(false);
-        // draw bars behind lines
+
+        //设置支持图表类型
         chart.setDrawOrder(new CombinedChart.DrawOrder[]{
-                CombinedChart.DrawOrder.BAR, CombinedChart.DrawOrder.BUBBLE,
-                CombinedChart.DrawOrder.CANDLE, CombinedChart.DrawOrder.LINE,
-                CombinedChart.DrawOrder.SCATTER
+                CombinedChart.DrawOrder.LINE,CombinedChart.DrawOrder.BAR
         });
 
+        //设置图表标注信息
         Legend l = chart.getLegend();
         l.setWordWrapEnabled(true);
-        l.setVerticalAlignment(Legend.LegendVerticalAlignment.BOTTOM);
+        l.setVerticalAlignment(Legend.LegendVerticalAlignment.TOP);
         l.setHorizontalAlignment(Legend.LegendHorizontalAlignment.CENTER);
         l.setOrientation(Legend.LegendOrientation.HORIZONTAL);
+        l.setForm(Legend.LegendForm.LINE);
+        l.setFormSize(14f); // 图形大小
+        l.setFormLineWidth(9f);  // 图形线宽
+        l.setXEntrySpace(15f);
+        l.setYEntrySpace(100f);
         l.setDrawInside(false);
 
         YAxis rightAxis = chart.getAxisRight();
-        rightAxis.setDrawGridLines(false);
+        rightAxis.setDrawGridLines(true);
         rightAxis.setAxisMinimum(0f); // this replaces setStartAtZero(true)
         rightAxis.setAxisMaximum(100);
         ValueFormatter custom = new MyValueFormatter("%");
         rightAxis.setValueFormatter(custom);
 
         YAxis leftAxis = chart.getAxisLeft();
-        leftAxis.setDrawGridLines(false);
+        leftAxis.setDrawGridLines(true);
         leftAxis.setAxisMinimum(0f); // this replaces setStartAtZero(true)
         leftAxis.setAxisMaximum(12000f);
 
         XAxis xAxis = chart.getXAxis();
-        xAxis.setPosition(XAxis.XAxisPosition.BOTH_SIDED);
+        xAxis.setPosition(XAxis.XAxisPosition.BOTTOM);
         xAxis.setAxisMinimum(0f);
+        xAxis.setAxisMaximum(12f);
         xAxis.setGranularity(1f);
         xAxis.setValueFormatter(new ValueFormatter() {
             @Override
             public String getFormattedValue(float value) {
-                return months[(int) value % months.length];
+                Log.d("getFormattedValue", value + "");
+                return months[(int) (value/2)];
             }
         });
 
         CombinedData data = new CombinedData();
 
-        data.setData(generateLineData());
         data.setData(generateBarData());
+        data.setData(generateLineData());
 
         xAxis.setAxisMaximum(data.getXMax() + 0.25f);
-
+        xAxis.setDrawAxisLine(false);
+        xAxis.setDrawGridLines(false);
         chart.setData(data);
         chart.invalidate();
     }
@@ -111,7 +120,7 @@ public class MainActivity extends AppCompatActivity {
         for (int index = 0; index < count; index++)
             entries.add(new Entry(index + 0.5f, getRandom(100, 11000)));
 
-        LineDataSet set = new LineDataSet(entries, "Line DataSet");
+        LineDataSet set = new LineDataSet(entries, "设备完好率");
         set.setColor(Color.parseColor("#E59966"));
         set.setLineWidth(2.5f);
         set.setCircleColor(Color.parseColor("#E59966"));
@@ -120,8 +129,6 @@ public class MainActivity extends AppCompatActivity {
         set.setFillColor(Color.WHITE);
         set.setMode(LineDataSet.Mode.CUBIC_BEZIER);
         set.setDrawValues(false);
-        set.setValueTextSize(10f);
-        set.setValueTextColor(Color.rgb(240, 238, 70));
 
         set.setAxisDependency(YAxis.AxisDependency.LEFT);
         d.addDataSet(set);
@@ -140,26 +147,22 @@ public class MainActivity extends AppCompatActivity {
             entries2.add(new BarEntry(0, getRandom(1500, 7000)));
         }
 
-        BarDataSet set1 = new BarDataSet(entries1, "Bar 1");
+        BarDataSet set1 = new BarDataSet(entries1, "设备完好数");
         set1.setColor(Color.parseColor("#00CED7"));
-        set1.setValueTextColor(Color.rgb(60, 220, 78));
         set1.setDrawValues(false);
-        set1.setValueTextSize(10f);
         set1.setAxisDependency(YAxis.AxisDependency.LEFT);
 
-        BarDataSet set2 = new BarDataSet(entries2, "");
+        BarDataSet set2 = new BarDataSet(entries2, "设备总数");
         set2.setColors(Color.parseColor("#FF827C"));
-        set2.setValueTextColor(Color.rgb(61, 165, 255));
         set2.setDrawValues(false);
-        set2.setValueTextSize(10f);
         set2.setAxisDependency(YAxis.AxisDependency.LEFT);
 
-        float groupSpace = 0.06f;
-        float barSpace = 0.02f; // x2 dataset
+        float groupSpace = 0.0f;
+        float barSpace = 0.1f; // x2 dataset
         float barWidth = 0.45f; // x2 dataset
         // (0.45 + 0.02) * 2 + 0.06 = 1.00 -> interval per "group"
 
-        BarData d = new BarData(set1, set2);
+        BarData d = new BarData(set2, set1);
         d.setBarWidth(barWidth);
 
         // make this BarData object grouped
